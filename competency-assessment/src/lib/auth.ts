@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compareSync } from "bcryptjs";
 import { prisma } from "./db";
@@ -60,8 +60,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role: string }).role;
-        token.careerTrack = (user as { careerTrack: string }).careerTrack;
+        token.role = (user as unknown as { role: string }).role;
+        token.careerTrack = (user as unknown as { careerTrack: string }).careerTrack;
       }
       return token;
     },
