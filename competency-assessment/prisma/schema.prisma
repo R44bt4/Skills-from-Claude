@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Enums are defined as String fields in SQLite (SQLite does not support native enums).
+// Valid values are enforced at the application layer via Zod schemas.
+// AppRole: EMPLOYEE | MANAGER | ADMIN
+// CycleStatus: OPEN | REVIEWING | CALIBRATING | CLOSED
+// AssessmentStatus: DRAFT | SUBMITTED
+// PlanStatus: GENERATING | READY | FAILED
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("EMPLOYEE") // AppRole
+  careerTrack  String
+
+  managerId     String?
+  manager       Employee?  @relation("ManagerReports", fields: [managerId], references: [id])
+  directReports Employee[] @relation("ManagerReports")
+
+  assessments  SelfAssessment[]
+  reviewsGiven ManagerReview[]
+  calibrations CalibrationResult[] @relation("CalibratedBy")
+
+  createdAt DateTime @default(now())
+}
+
+model AssessmentCycle {
+  id          String   @id @default(cuid())
+  name        String
+  status      String   @default("OPEN") // CycleStatus
+  startDate   DateTime
+  endDate     DateTime
+  assessments SelfAssessment[]
+  createdAt   DateTime @default(now())
+}
+
+model SelfAssessment {
+  id             String    @id @default(cuid())
+  employeeId     String
+  cycleId        String
+  scores         String    // JSON
+  computedLevels String?   // JSON
+  careerProgress Float?
+  status         String    @default("DRAFT") // AssessmentStatus
+  submittedAt    DateTime?
+
+  employee      Employee        @relation(fields: [employeeId], references: [id])
+  cycle         AssessmentCycle @relation(fields: [cycleId], references: [id])
+  managerReview ManagerReview?
+  calibration   CalibrationResult?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, cycleId])
+}
+
+model ManagerReview {
+  id             String    @id @default(cuid())
+  assessmentId   String    @unique
+  reviewerId     String
+  scores         String
+  comments       String
+  computedLevels String?
+  careerProgress Float?
+  status         String    @default("DRAFT") // AssessmentStatus
+  submittedAt    DateTime?
+
+  assessment SelfAssessment @relation(fields: [assessmentId], references: [id])
+  reviewer   Employee       @relation(fields: [reviewerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CalibrationResult {
+  id             String  @id @default(cuid())
+  assessmentId   String  @unique
+  finalScores    String
+  finalLevels    String
+  finalProgress  Float
+  calibratedById String
+
+  assessment   SelfAssessment @relation(fields: [assessmentId], references: [id])
+  calibratedBy Employee       @relation("CalibratedBy", fields: [calibratedById], references: [id])
+  growthPlans  GrowthPlan[]
+
+  calibratedAt DateTime @default(now())
+}
+
+model GrowthPlan {
+  id             String  @id @default(cuid())
+  calibrationId  String
+  employeeId     String
+  cycleId        String
+  version        Int     @default(1)
+  content        String
+  rawLlmResponse String
+  status         String  @default("GENERATING") // PlanStatus
+  errorMessage   String?
+
+  calibration CalibrationResult @relation(fields: [calibrationId], references: [id])
+
+  generatedAt DateTime @default(now())
+}
