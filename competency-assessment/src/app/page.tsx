@@ -9,6 +9,16 @@ export default async function RootPage() {
     redirect("/login");
   }
 
-  // Redirect to assessment page (placeholder until role-based pages are built in Task 16)
+  const role = session.user?.role;
+
+  if (role === "ADMIN") {
+    redirect("/admin/cycles");
+  }
+
+  if (role === "MANAGER") {
+    redirect("/reviews");
+  }
+
+  // EMPLOYEE (default)
   redirect("/assessment");
 }

@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
 import { Sidebar } from "@/components/sidebar";
 
-interface EmployeeLayoutProps {
+interface AdminLayoutProps {
   children: ReactNode;
 }
 
-export default function EmployeeLayout({ children }: EmployeeLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -13,7 +13,7 @@ export default function EmployeeLayout({ children }: EmployeeLayoutProps) {
       <div className="lg:hidden h-14" />
       {/* Content offset for desktop sidebar */}
       <main className="lg:pl-64">
-        <div className="max-w-3xl mx-auto px-4 py-8">{children}</div>
+        <div className="max-w-6xl mx-auto px-4 py-8">{children}</div>
       </main>
     </div>
   );
