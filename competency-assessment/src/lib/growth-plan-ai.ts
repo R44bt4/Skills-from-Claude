@@ -1,11 +1,11 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "./db";
 import { computeGapAnalysis } from "./scoring-engine";
 import { GrowthPlanContentSchema } from "./validations";
 import { CompetencyKey } from "@/config/competencies";
 import { roles, RoleKey } from "@/config/roles";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export function buildGrowthPlanPrompt(
   employeeName: string,
@@ -166,27 +166,22 @@ export async function generateGrowthPlan(calibrationId: string) {
     },
   });
 
-  // 5. Call OpenAI with retries
+  // 5. Call Anthropic Claude with retries
   const maxRetries = 3;
   const backoffMs = [2000, 8000, 32000];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await openai.chat.completions.create(
-        {
-          model: "gpt-4-turbo-preview",
-          max_tokens: 4000,
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemMessage },
-            { role: "user", content: userMessage },
-          ],
-        },
-        { timeout: 60000 }
-      );
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: systemMessage,
+        messages: [
+          { role: "user", content: userMessage },
+        ],
+      });
 
-      const rawLlmResponse = response.choices[0]?.message?.content ?? "";
+      const rawLlmResponse = response.content[0]?.type === "text" ? response.content[0].text : "";
 
       // 6. Parse and validate response
       const content = parseGrowthPlanResponse(rawLlmResponse);
