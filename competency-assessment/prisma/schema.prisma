@@ -32,6 +32,7 @@ model Employee {
   assessments  SelfAssessment[]
   reviewsGiven ManagerReview[]
   calibrations CalibrationResult[] @relation("CalibratedBy")
+  growthPlans  GrowthPlan[]
 
   createdAt DateTime @default(now())
 }
@@ -43,6 +44,7 @@ model AssessmentCycle {
   startDate   DateTime
   endDate     DateTime
   assessments SelfAssessment[]
+  growthPlans GrowthPlan[]
   createdAt   DateTime @default(now())
 }
 
@@ -112,6 +114,8 @@ model GrowthPlan {
   errorMessage   String?
 
   calibration CalibrationResult @relation(fields: [calibrationId], references: [id])
+  employee    Employee          @relation(fields: [employeeId], references: [id])
+  cycle       AssessmentCycle   @relation(fields: [cycleId], references: [id])
 
   generatedAt DateTime @default(now())
 }
